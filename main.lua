@@ -50,30 +50,34 @@ function AskGPT:onDictButtonsReady(dict_popup, buttons)
                 UpdateChecker.checkForUpdates()
                 updateMessageShown = true
               end
-              local InfoMessage = require("ui/widget/infomessage")
-              local queryWord = dict_popup.word
-              local systemDialog = {
-                role = "system",
-                content = "You are a helpful translation assistant. Provide direct translations without additional commentary."
-              }
-              local queryDialog = {systemDialog, {
-                role = "user",
-                content = "What is the definition of this word: ".. queryWord.. " given that the name of the book is: " .. self.ui.document:getProps().title
-              }}
-              local loading = InfoMessage:new{
-                text = _("Loading..."),
-                timeout = 0.1
-              }
-              UIManager:show(loading)
-              UIManager:scheduleIn(0.1, function()
-                UIManager:show(InfoMessage:new{
-                  text = _(queryChatGPT(queryDialog)),
-              })
-              end)
+              QuerySingleWord(dict_popup, self.ui.document:getProps().title)
             end)
           end
       })
     end  
   end
+end
+
+function QuerySingleWord(dict_popup, title)
+  local InfoMessage = require("ui/widget/infomessage")
+  local queryWord = dict_popup.word
+  local systemDialog = {
+    role = "system",
+    content = "You are a helpful translation assistant. Provide direct translations without additional commentary."
+  }
+  local queryDialog = {systemDialog, {
+    role = "user",
+    content = "What is the definition of this word: ".. queryWord.. " given that the name of the book is: " .. title
+  }}
+  local loading = InfoMessage:new{
+    text = _("Loading..."),
+    timeout = 0.1
+  }
+  UIManager:show(loading)
+  UIManager:scheduleIn(0.1, function()
+    UIManager:show(InfoMessage:new{
+    text = _(queryChatGPT(queryDialog)),
+  })
+  end)
 end
 return AskGPT
