@@ -1,5 +1,5 @@
 # THIS IS A FORK
-Added a button for single word definitions.
+Added a button for single word definitions. I do not take credit for a majority of this work!!!
 
 # AskGPT: ChatGPT Highlight Plugin for KOReader
 
