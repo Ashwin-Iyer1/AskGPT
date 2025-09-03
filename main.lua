@@ -33,6 +33,21 @@ function AskGPT:init()
       end,
     }
   end)
+  self.ui.highlight:addToHighlightDialog("askgpt_QuickAsk", function(_reader_highlight_instance)
+    return {
+      text = _("Dict Quick Ask"),
+      enabled = Device:hasClipboard(),
+      callback = function()
+        NetworkMgr:runWhenOnline(function()
+          if not updateMessageShown then
+            UpdateChecker.checkForUpdates()
+            updateMessageShown = true -- Set flag to true so it won't show again
+          end
+          QuerySingleWord(_reader_highlight_instance.selected_text.text, self.ui.document:getProps().title)
+        end)
+      end,
+    }
+  end)
 end
 
 function AskGPT:onDictButtonsReady(dict_popup, buttons)
@@ -50,7 +65,7 @@ function AskGPT:onDictButtonsReady(dict_popup, buttons)
                 UpdateChecker.checkForUpdates()
                 updateMessageShown = true
               end
-              QuerySingleWord(dict_popup, self.ui.document:getProps().title)
+              QuerySingleWord(dict_popup.word, self.ui.document:getProps().title)
             end)
           end
       })
@@ -58,9 +73,8 @@ function AskGPT:onDictButtonsReady(dict_popup, buttons)
   end
 end
 
-function QuerySingleWord(dict_popup, title)
+function QuerySingleWord(queryWord, title)
   local InfoMessage = require("ui/widget/infomessage")
-  local queryWord = dict_popup.word
   local systemDialog = {
     role = "system",
     content = "You are a helpful translation assistant. Provide direct translations without additional commentary."
