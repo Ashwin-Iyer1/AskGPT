@@ -4,16 +4,44 @@ local NetworkMgr = require("ui/network/manager")
 local _ = require("gettext")
 local UIManager = require("ui/uimanager")
 local queryChatGPT = require("gpt_query")
-
+local Dispatcher = require("dispatcher")
 local showChatGPTDialog = require("dialogs")
 local UpdateChecker = require("update_checker")
+local InfoMessage = require("ui/widget/infomessage")
+local WidgetContainer = require("ui/widget/container/widgetcontainer")
+local apikeyset = require("apikeyset")
 
+
+
+
+local AskGPTSettings = WidgetContainer:extend {
+  name = 'askgptsettings',
+}
+
+function AskGPTSettings:init()
+  if not self.ui or not self.ui.menu then return end
+  self.ui.menu:registerToMainMenu(self)
+end
+
+function AskGPTSettings:addToMainMenu(menu_items)
+  menu_items.askgpt_settings = {
+    text = _("Ask GPT Settings"),
+    sorting_hint = "more_tools",
+    keep_menu_open = true,
+    callback = function()
+      local apikeyset = apikeyset:new {
+        title = _("Market View"),
+        text = _("Input a ticker symbol"),
+      }
+      UIManager:show(apikeyset)
+    end
+  }
+end
 
 local AskGPT = InputContainer:new {
   name = "askgpt",
   is_doc_only = true,
 }
-
 -- Flag to ensure the update message is shown only once per session
 local updateMessageShown = false
 
@@ -55,21 +83,21 @@ function AskGPT:onDictButtonsReady(dict_popup, buttons)
     return
   else
     if buttons[2] then
-      table.insert(buttons[2], 1, {  -- Insert inside the first button group
-          id = "GPTDefinition",
-          text = _("askChat"),
-          font_bold = true,
-          callback = function()
-            NetworkMgr:runWhenOnline(function()
-              if not updateMessageShown then
-                UpdateChecker.checkForUpdates()
-                updateMessageShown = true
-              end
-              QuerySingleWord(dict_popup.word, self.ui.document:getProps().title)
-            end)
-          end
+      table.insert(buttons[2], 1, { -- Insert inside the first button group
+        id = "GPTDefinition",
+        text = _("askChat"),
+        font_bold = true,
+        callback = function()
+          NetworkMgr:runWhenOnline(function()
+            if not updateMessageShown then
+              UpdateChecker.checkForUpdates()
+              updateMessageShown = true
+            end
+            QuerySingleWord(dict_popup.word, self.ui.document:getProps().title)
+          end)
+        end
       })
-    end  
+    end
   end
 end
 
@@ -79,19 +107,20 @@ function QuerySingleWord(queryWord, title)
     role = "system",
     content = "You are a helpful translation assistant. Provide direct translations without additional commentary."
   }
-  local queryDialog = {systemDialog, {
+  local queryDialog = { systemDialog, {
     role = "user",
-    content = "What is the definition of this word: ".. queryWord.. " given that the name of the book is: " .. title
-  }}
-  local loading = InfoMessage:new{
+    content = "What is the definition of this word: " .. queryWord .. " given that the name of the book is: " .. title
+  } }
+  local loading = InfoMessage:new {
     text = _("Loading..."),
     timeout = 0.1
   }
   UIManager:show(loading)
   UIManager:scheduleIn(0.1, function()
-    UIManager:show(InfoMessage:new{
-    text = _(queryChatGPT(queryDialog)),
-  })
+    UIManager:show(InfoMessage:new {
+      text = _(queryChatGPT(queryDialog)),
+    })
   end)
 end
-return AskGPT
+
+return AskGPTSettings, AskGPT
